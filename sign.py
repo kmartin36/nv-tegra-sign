@@ -12,8 +12,16 @@ if len(argv) != 3:
   exit(0)
 
 fi=open(argv[1], 'rb')
-a=pack('<LLQ',0,5,stat(argv[1]).st_size)+fi.read()
+data=fi.read()
 fi.close()
+orig_len=len(data)
+padded_len=((orig_len + 15) & (-16))
+if orig_len == padded_len:
+	padded=data
+else:
+	padded=data+'\x80'
+	padded=padded.ljust(padded_len, '\0')
+a=pack('<LLQ',0,5,padded_len)+padded
 c=cmac.CMAC(algorithms.AES(pack('QQ',0,0)), backend=backend)
 c.update(a)
 d=c.finalize()
